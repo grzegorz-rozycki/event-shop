@@ -25,8 +25,12 @@ class File implements MessageRepository
     {
         if (empty($messages))
             return;
+
         $rootId = $messages[0]->aggregateRootId();
-        file_put_contents($this->fileForAggregate($rootId), json_encode(array_map([$this->serializer, 'serializeMessage'], $messages)));
+        $file = $this->fileForAggregate($rootId);
+        $oldMessages = json_decode(@file_get_contents($file), true) ?: [];
+        $newMessages = array_map([$this->serializer, 'serializeMessage'], $messages);
+        file_put_contents($file, json_encode(array_merge($oldMessages, $newMessages)));
     }
 
     public function retrieveAll(AggregateRootId $id): Generator
@@ -57,6 +61,6 @@ class File implements MessageRepository
 
     public function fileForAggregate(AggregateRootId $id): string
     {
-        return "{$this->directory}/{$id->toString()}.json";
+        return $this->directory . DIRECTORY_SEPARATOR . $id->toString() . '.json';
     }
 }

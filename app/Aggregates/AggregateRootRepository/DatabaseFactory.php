@@ -12,7 +12,7 @@ class DatabaseFactory implements Factory
 {
     public static function make(string $aggregateRootClassName): AggregateRootRepository
     {
-        $table = 'aggregate_' . Str::snake(basename($aggregateRootClassName));
+        $table = 'aggregate_' . $aggregateRootClassName::NAME;
         $serializer = new ConstructingMessageSerializer();
         $messageRepository = new Database($serializer, $table);
 

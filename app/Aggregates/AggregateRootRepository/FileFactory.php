@@ -12,7 +12,7 @@ class FileFactory implements Factory
 {
     public static function make(string $aggregateRootClassName): AggregateRootRepository
     {
-        $storageDir = app_path('aggregates/' . Str::snake(basename($aggregateRootClassName)));
+        $storageDir = storage_path(join(DIRECTORY_SEPARATOR, ['app', 'aggregates', $aggregateRootClassName::NAME]));
 
         if (!is_dir($storageDir)) {
             mkdir($storageDir, 0755, true);
