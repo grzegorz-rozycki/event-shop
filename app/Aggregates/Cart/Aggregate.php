@@ -2,9 +2,9 @@
 
 namespace App\Aggregates\Cart;
 
+use App\Exceptions\DomainException;
 use EventSauce\EventSourcing\AggregateRoot;
 use EventSauce\EventSourcing\AggregateRootBehaviour;
-use LogicException;
 
 class Aggregate implements AggregateRoot
 {
@@ -39,7 +39,7 @@ class Aggregate implements AggregateRoot
     public function performItemAdded(array $payload)
     {
         if (isset($this->items[$payload['id'] ?? 0]))
-            throw new LogicException(__('aggregate.cart.item_already_exists'));
+            throw new DomainException(__('aggregate.cart.item_already_exists'));
 
         $this->recordThat(new Events\ItemAdded($payload));
     }

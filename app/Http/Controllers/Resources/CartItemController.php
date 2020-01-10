@@ -2,44 +2,40 @@
 
 namespace App\Http\Controllers\Resources;
 
-use App\Aggregates\AggregateRootRepository\Factory;
-use App\Aggregates\Cart\Aggregate as CartAggregate;
-use App\Aggregates\Cart\Id;
+use App\Exceptions\DomainException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AddCartItem as AddCartItemRequest;
 use App\Http\Resources\CartItem as CartItemResource;
+use App\Services\CartItem;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CartItemController extends Controller
 {
-    private $repository;
+    private $cartItemService;
 
-    public function __construct(Factory $factory)
+    public function __construct(CartItem $cartItemService)
     {
-        $this->repository = $factory->make(CartAggregate::class);
+        $this->cartItemService = $cartItemService;
     }
 
     public function index(string $cart)
     {
-        /** @var CartAggregate $cart */
-        $cart = $this->repository->retrieve(new Id($cart));
+        $cart = $this->cartItemService->findCartById($cart);
 
         return $cart->exists()
             ? CartItemResource::collection($cart->getItems())
             : abort(404);
     }
 
-    public function store(Request $request, string $cart)
+    public function store(AddCartItemRequest $request, string $cart)
     {
-        /** @var CartAggregate $cart */
-        $cart = $this->repository->retrieve(new Id($cart));
-
-        if (!$cart->exists())
-            $cart->performCreated();
-
-        $cart->performItemAdded($request->only(['amount', 'id']));
-        $this->repository->persist($cart);
-
-        return CartItemResource::collection($cart->getItems());
+        try {
+            $cart = $this->cartItemService->addItem($cart, $request->get('id'), $request->get('amount'));
+            return CartItemResource::collection($cart->getItems());
+        } catch (DomainException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 422);
+        }
     }
 
     /**
